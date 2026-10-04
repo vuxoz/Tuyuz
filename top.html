@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan — Top Movers Solana</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<div class="wrap">
+  <header>
+  <div class="dalam">
+  <h1><a href="/">KoinScan <span>SOL</span></a></h1>
+    <p class="sub"><span class="live"></span>Top movers 24 jam — meme coin Solana paling meledak hari ini</p>
+  </div>
+</header>
+  <div id="nav"></div>
+  <div id="ticker"></div>
+
+  <h2 class="baris">TOP MOVERS SEJAK DIANALISA <span class="ket">kenaikan sejak masuk analisa → MC live</span></h2>
+  <div class="tabel-wrap"><table class="mini" id="t-mover"><thead><tr>
+    <th>#</th><th>Koin</th><th class="r">Naik</th><th class="r hide-m">MC Awal</th><th class="r">MC</th>
+    <th class="r hide-m">Dianalisa</th></tr></thead><tbody></tbody></table></div>
+
+   <h2 class="baris">PENGGERAK TERBESAR 24 JAM <span class="ket" id="kUpdate"></span></h2>
+  <div class="tabel-wrap"><table class="mini" id="t"><thead><tr>
+    <th>#</th><th>Koin</th><th class="r">Skor</th><th class="r">MC</th><th class="r hide-m">Liq</th><th class="r">1j</th><th class="r">24j</th><th class="r hide-m">Vol 24j</th></tr></thead><tbody></tbody></table></div>
+
+  <footer>
+    <div>Data DexScreener · disusun otomatis dari semua koin di feed KoinScan.</div>
+    <div class="foot-by">KoinScan by <b>arifrfza</b></div>
+  </footer>
+</div>
+<script src="/static/app.js?v=27"></script>
+<script src="/static/nav.js?v=9"></script>
+<script>
+function tampilSemuaMovers(){
+  document.querySelector('#t-mover tbody').innerHTML = window._moversPenuh.map((k,i)=>`
+    <tr data-mint="${k.mint}" onclick="if(event.target.closest('a'))return;location='/grafik?mint=${k.mint}'">
+      <td class="dim">${i+1}</td>
+      <td><a class="koin-link" href="/grafik?mint=${k.mint}" style="color:inherit">${logoHTML(k,'logo-t')}<b>${esc(k.simbol)}</b></a> <span class="wl-add" title="Tambah ke watchlist" onclick="event.stopPropagation();tambahWL('${k.mint}',this)">＋</span><button class="copy-ca" title="Salin alamat kontrak" onclick="copyCA('${k.mint}',event)">CA</button></td>
+      <td class="r"><b class="up">${k.kenaikan_pct>=100?'+'+(k.kenaikan_pct/100).toFixed(1)+'×':'+'+k.kenaikan_pct.toFixed(1)+'%'}</b></td>
+      <td class="r hide-m">${fmt$(k.mc_awal)}</td>
+      <td class="r"><b>${fmt$(k.mc)}</b></td>
+      <td class="r hide-m">${k.umur_analisa_jam<1?Math.round(k.umur_analisa_jam*60)+' mnt':k.umur_analisa_jam.toFixed(1)+' j'}</td>
+    </tr>`).join('');
+}
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
+async function muat(){
+  try{
+    // --- movers sejak dianalisa ---
+    try {
+      const rm = await fetch('/api/movers');
+      const mm = await rm.json();
+      document.querySelector('#t-mover tbody').innerHTML = (() => { const a = mm.movers||[]; window._moversPenuh = a; return a.slice(0,10); })().map((k,i)=>`
+        <tr data-mint="${k.mint}" onclick="if(event.target.closest('a'))return;location='/grafik?mint=${k.mint}'">
+          <td class="dim">${i+1}</td>
+          <td><a class="koin-link" href="/grafik?mint=${k.mint}" style="color:inherit">${logoHTML(k,'logo-t')}<b>${esc(k.simbol)}</b></a></td>
+          <td class="r"><b class="up">${k.kenaikan_pct>=100?'+'+(k.kenaikan_pct/100).toFixed(1)+'×':'+'+k.kenaikan_pct.toFixed(1)+'%'}</b></td>
+          <td class="r hide-m">${fmt$(k.mc_awal)}</td>
+          <td class="r"><b>${fmt$(k.mc)}</b></td>
+          <td class="r hide-m">${k.umur_analisa_jam<1?Math.round(k.umur_analisa_jam*60)+' mnt':k.umur_analisa_jam.toFixed(1)+' j'}</td>
+        </tr>`).join('') + (window._moversPenuh.length>10?`<tr><td colspan="6" style="text-align:center;padding:8px"><a href="#" onclick="tampilSemuaMovers();return false" style="color:#16c784;font-weight:600">Lihat semua ${window._moversPenuh.length} koin ↓</a></td></tr>`:'') || '<tr><td colspan="6" class="kosong">Belum ada kenaikan ≥10% sejak dianalisa.</td></tr>';
+    } catch(e) { console.error('movers', e); }
+
+    const r = await fetch('/api/feed');
+    const f = await r.json();
+    document.getElementById('kUpdate').textContent = f.waktu || '';
+    // gabung semua koin dari semua papan, urut 24j turun
+    const semua = [];
+    for (const key of ['menarik_dibeli','pumpfun_baru','pumpfun_stonk','solana_alternatif','akumulasi'])
+      for (const k of (f[key]||[]))
+        if ((k.h24 ?? -999) > -999 && k.mint) semua.push(k);
+    const unik = {}; for (const k of semua) unik[k.mint] = k;
+    const top = Object.values(unik).sort((a,b)=>(b.h24||0)-(a.h24||0)).slice(0, 15);
+    document.pasangSortir('#t', [2,3,4,5,6,7,8]);
+querySelector('#t tbody').innerHTML = top.map((k,i)=>`
+      <tr data-mint="${k.mint}" onclick="if(event.target.closest('a'))return;location='/grafik?mint=${k.mint}'">
+        <td class="dim">${i+1}</td>
+        <td><a class="koin-link" href="/grafik?mint=${k.mint}" style="color:inherit">${logoHTML(k,'logo-t')}<b>${esc(k.simbol)}</b></a> <span class="badge">${esc((k.nama||'').slice(0,14))}</span></td>
+        <td class="r skor">${skorHTML(k.skor??'–')}</td>
+        <td class="r"><b>${fmt$(k.mc)}</b></td>
+        <td class="r hide-m">${k.liq?fmt$(k.liq):'–'}</td>
+        <td class="r">${pct(k.h1)}</td>
+        <td class="r"><b class="${(k.h24||0)>=0?'up':'down'}">${(k.h24||0)>=0?'+':''}${(k.h24||0).toFixed(1)}%</b></td>
+        <td class="r hide-m">${k.vol24?fmt$(k.vol24):'–'}</td>
+              </tr>`).join('') || '<tr><td colspan="8" class="kosong">Belum ada data.</td></tr>';
+  }catch(e){}
+}
+function tambahWL(mint) {
+  try {
+    let a = [];
+    try { a = JSON.parse(localStorage.getItem('koinscan_wl')||'[]'); } catch(e) {}
+    if (typeof a === 'object' && !Array.isArray(a)) a = Object.keys(a);
+    if (!a.includes(mint)) a.unshift(mint);
+    localStorage.setItem('koinscan_wl', JSON.stringify(a.slice(0,20)));
+    event.target.textContent='✅';
+    setTimeout(()=>{ event.target.textContent='➕'; }, 1200);
+  } catch(e) {}
+}
+function salinCA(btn, mint) {
+  navigator.clipboard?.writeText(mint).then(()=>{ btn.textContent='✅'; setTimeout(()=>btn.textContent='📋',1200); });
+}
+pasangTicker('#ticker'); muat(); setInterval(muat, 60000);
+</script>
+</body>
+</html>

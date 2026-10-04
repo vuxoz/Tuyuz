@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan — Tentang & Metodologi</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<div class="wrap">
+  <header>
+  <div class="dalam">
+  <h1><a href="/">KoinScan <span>SOL</span></a></h1>
+    <p class="sub">Analisa meme coin Solana real-time</p>
+  </div>
+</header>
+  <div id="nav"></div>
+  <div class="disk">⚠️ <b>Disclaimer:</b> KoinScan adalah alat edukasi &amp; analisa independen — bukan saran
+    finansial. Meme coin = risiko sangat tinggi. <b>Selalu DYOR.</b></div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <h2 style="margin-top:0">Apa itu KoinScan?</h2>
+    <p class="dim" style="font-size:.84rem">KoinScan memindai ribuan meme coin Solana dari pump.fun,
+      pumpswap, dan DEX lainnya secara otomatis — setiap 20 detik untuk data live, setiap 10 menit untuk
+      analisa mendalam — lalu menyaring yang berbahaya dan menonjolkan yang menarik, lengkap dengan
+      alasan terukur untuk setiap keputusan.</p>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <h2 style="margin-top:0">Cara Kerja Analisa Risiko</h2>
+    <ul class="dim" style="font-size:.8rem;margin-left:18px;line-height:2">
+      <li><b style="color:var(--down)">Honeypot</b> — mint/freeze authority aktif: pembuat bisa mencetak token tanpa batas atau membekukan dompetmu.</li>
+      <li><b style="color:var(--down)">Rug</b> — koin yang terdeteksi sudah pernah kempretin.</li>
+      <li><b style="color:var(--warn)">Bundler</b> — banyak wallet terkait membeli bersamaan. Normal di detik-detik awal peluncuran pump.fun, tapi tetap ditandai.</li>
+      <li><b style="color:var(--warn)">Konsentrasi tinggi</b> — top-10 holder menguasai sebagian besar supply → mudah dimanipulasi.</li>
+      <li><b style="color:var(--acc)">Insider network</b> — wallet terkait creator pegang supply besar.</li>
+      <li>Sumber: <b>RugCheck API</b> + filter internal KoinScan. Koin SCAM/BAHAYA dipindah ke papan 🚫 dengan alasan spesifik.</li>
+    </ul>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <h2 style="margin-top:0">Metodologi Riset Koin Baru</h2>
+    <p class="dim" style="font-size:.8rem">Koin baru tidak dinilai dari potret sesaat. Setiap koin
+      dilacak antar-poll (20 detik – 10 menit) dan skornya dibangun dari <b>bukti pertumbuhan riil</b>:</p>
+    <ul class="dim" style="font-size:.8rem;margin-left:18px;line-height:2">
+      <li><b>Pertumbuhan MC</b> sejak pertama terpantau (×)</li>
+      <li><b>Laju</b> kenaikan $/jam</li>
+      <li><b>Posisi ATH</b> — masih dekat puncak = minat kuat</li>
+      <li><b>Aktivitas trade</b> — koin tanpa transaksi 30+ menit dianggap mati</li>
+      <li><b>Konsistensi</b> — naik berturut-turut antar-poll, spike tunggal tidak dihitung</li>
+      <li><b>Progres graduation</b> — kedekatan lulus ke pumpswap (~$69K)</li>
+      <li><b>Riwayat creator</b> — pembuat koin serial spam mendapat penalti</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top:0">Teknologi</h2>
+    <p class="dim" style="font-size:.8rem">Python stdlib murni (tanpa framework), server HTTP threading
+      sendiri, chart canvas digambar mandiri, systemd + Cloudflare tunnel. Sumber data: pump.fun API,
+      DexScreener, GeckoTerminal, RugCheck.</p>
+  </div>
+
+  <footer>
+    <div>KoinScan — alat analisa meme coin Solana, gratis untuk semua.</div>
+    <div class="foot-by">Dibuat oleh <b>arifrfza</b></div>
+  </footer>
+</div>
+<script src="/static/nav.js?v=9"></script>
+</body>
+</html>

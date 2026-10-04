@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan SOL — Watchlist</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<div class="wrap">
+  <header>
+  <div class="dalam">
+  <h1><a href="/">KoinScan <span>SOL</span></a></h1>
+    <p class="sub">Pantau koin pilihanmu — harga & MC update otomatis tiap 20 detik (client polling), tersimpan di browser</p>
+  </div>
+</header>
+  <div id="nav"></div>
+  <div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
+    <input id="mint" placeholder="Alamat kontrak (CA) koin yang mau dipantau"
+      style="flex:1;min-width:260px;background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:10px 12px;font-family:inherit;font-size:.85rem">
+    <button onclick="tambah()" style="background:var(--amber);color:#000;border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer;font-family:inherit">+ PANTAU</button>
+  </div>
+  <div id="daftar"></div>
+  <footer>
+  <div>Data: pump.fun · DexScreener · GeckoTerminal · RugCheck — diproses mandiri tanpa perantara.</div>
+  <div class="foot-by">KoinScan by <b>arifrfza</b></div>
+</footer>
+</div>
+<script src="/static/app.js?v=27"></script>
+<script src="/static/nav.js?v=9"></script>
+<script>
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
+function fmtL(x){ if(x==null) return '–'; if(x>=1e9) return '$'+(x/1e9).toFixed(2)+'B'; if(x>=1e6) return '$'+(x/1e6).toFixed(2)+'M'; if(x>=1e3) return '$'+(x/1e3).toFixed(1)+'K'; return '$'+Math.round(x); }
+function wl(){ try{ return JSON.parse(localStorage.getItem('koinscan_wl')||'[]'); }catch(e){ return []; } }
+function simpan(a){ localStorage.setItem('koinscan_wl', JSON.stringify(a)); }
+function tambah(){
+  const inp = document.getElementById('mint');
+  const m = inp.value.trim();
+  if (!m) return;
+  const a = wl();
+  if (!a.includes(m)) a.unshift(m);
+  simpan(a.slice(0, 20));
+  inp.value = '';
+  muat();
+}
+function hapus(m){ simpan(wl().filter(x=>x!==m)); muat(); }
+async function muat(){
+  const daftar = wl();
+  const el = document.getElementById('daftar');
+  if (!daftar.length){ el.innerHTML = '<p style="color:var(--dim)">Watchlist kosong. Tambahkan CA koin di atas, atau buka 🔍 Cek Koin lalu pantau dari sana.</p>'; return; }
+  el.innerHTML = daftar.map(m => `
+    <div class="wl-item" id="w-${m.slice(0,8)}">
+      <div class="wl-atas">
+        <span class="wl-mint">${esc(m)}</span>
+        <button class="wl-hapus" onclick="hapus('${esc(m)}')">hapus</button>
+      </div>
+      <div class="live-wl dim">memuat data live…</div>
+    </div>`).join('');
+  // fetch semua via dexscreener (batch)
+  try{
+    const r = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + daftar.join(','));
+    const d = await r.json();
+    const byMint = {};
+    for (const p of (d.pairs||[])){
+      const mint = p.baseToken?.address;
+      if (!mint) continue;
+      if (!byMint[mint] || (p.liquidity?.usd||0) > (byMint[mint].liquidity?.usd||0)) byMint[mint] = p;
+    }
+    for (const m of daftar){
+      const box = document.getElementById('w-'+m.slice(0,8));
+      if (!box) continue;
+      const p = byMint[m];
+      const live = box.querySelector('.live-wl');
+      if (!p){ live.innerHTML = '<span class="dim">belum terdaftar di DEX — mungkin masih bonding curve</span> · <a href="/grafik?mint='+m+'">📈 grafik tick</a>'; continue; }
+      const h24 = p.priceChange?.h24 ?? 0, h1 = p.priceChange?.h1 ?? 0;
+      live.innerHTML = `<div class="wl-data">
+        <b style="font-size:1rem">${esc(p.baseToken.symbol)}</b>
+        <span>harga <b>$${(+p.priceUsd).toPrecision(4)}</b></span>
+        <span>MC <b>${fmtL(p.marketCap||p.fdv)}</b></span>
+        <span>liq <b>${fmtL(p.liquidity?.usd)}</b></span>
+        <span>1j <b class="${h1>=0?'up':'down'}">${h1}%</b></span>
+        <span>24j <b class="${h24>=0?'up':'down'}">${h24}%</b></span>
+        <span class="up">● live</span>
+        <a href="/grafik?mint=${m}">📈 grafik</a></div>`;
+    }
+  }catch(e){}
+}
+muat(); setInterval(muat, 20000);
+</script>
+</body>
+</html>

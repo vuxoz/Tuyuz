@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan SOL — Cek Koin</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<div class="wrap">
+  <header>
+  <div class="dalam">
+  <h1><a href="/">KoinScan <span>SOL</span></a></h1>
+    <p class="sub">Tempel alamat kontrak (CA) koin Solana → analisa instan: honeypot, bundler, rug, likuiditas, riset</p>
+  </div>
+</header>
+  <div id="nav"></div>
+  <div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
+    <input id="mint" placeholder="Contoh: 4gZN2hQbYS5dHt1khSaGx1xbxEd471hAMRRef3etpump" autocomplete="off">
+    <button class="btn" onclick="cek()">Analisa →</button>
+  </div>
+  <div id="hasil"><p style="color:var(--dim)">Masukkan alamat kontrak koin (bisa dari pump.fun, DexScreener, atau Phantom).</p></div>
+  <footer>
+  <div>Data: pump.fun · DexScreener · GeckoTerminal · RugCheck — diproses mandiri tanpa perantara.</div>
+  <div class="foot-by">KoinScan by <b>arifrfza</b></div>
+</footer>
+</div>
+<script src="/static/app.js?v=27"></script>
+<script src="/static/nav.js?v=9"></script>
+<script>
+const WARNA = {red:'#f87171', amber:'#fbbf24', green:'#4ade80', gray:'#94a3b8'};
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
+function fmtL(x){ if(x==null) return '–'; if(x>=1e9) return '$'+(x/1e9).toFixed(2)+'B'; if(x>=1e6) return '$'+(x/1e6).toFixed(2)+'M'; if(x>=1e3) return '$'+(x/1e3).toFixed(1)+'K'; return '$'+Math.round(x); }
+async function cek(){
+  const m = document.getElementById('mint').value.trim();
+  if (!m) return;
+  const el = document.getElementById('hasil');
+  el.innerHTML = '<p style="color:var(--amber)">⏳ Menganalisa...</p>';
+  try{
+    const r = await fetch('/api/cek?mint='+encodeURIComponent(m));
+    const d = await r.json();
+    if (d.error){ el.innerHTML = `<p style="color:var(--red)">❌ ${esc(d.error)}</p>`; return; }
+    const v = d.verdict||{}, rk = d.risiko||{}, p = d.pasar, rs = d.riset;
+    el.innerHTML = `
+    <div class="panel">
+      <div style="font-size:1.05rem;font-weight:600;color:${WARNA[v.warna]||'#e6e9ef'}">
+        ${v.level==='HINDARI'?'⛔':v.level==='RELATIF AMAN'?'✅':v.level==='HATI-HATI'?'⚠️':'❓'} ${esc(v.level)}</div>
+      <div class="dim" style="font-size:.8rem;margin:4px 0 12px">${esc(v.pesan||'')}</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:.8rem">
+        ${p && p.simbol ? `<div><b>${esc(p.simbol)}</b> <span class="dim">${esc((p.nama||'').slice(0,20))}</span></div>
+          <div>MC <b>${fmtL(p.mc)}</b></div><div>Likuiditas <b>${fmtL(p.liq)}</b></div>
+          <div>24j <b style="color:${(p.h24||0)>=0?'var(--green)':'var(--red)'}">${(p.h24??0).toFixed(1)}%</b></div>
+          <div>Vol24 <b>${fmtL(p.vol24)}</b></div>` : '<div style="color:var(--dim)">Data pasar: tidak ditemukan (mungkin belum terdaftar DEX)</div>'}
+      </div>
+      <details style="margin-top:10px;font-size:.78rem"><summary style="cursor:pointer;color:var(--amber)">🛡️ Detail risiko (${esc(rk.putusan||'?')})</summary>
+        <ul style="margin:6px 0 0 18px;color:var(--dim)">
+          ${(rk.flag||[]).map(f=>`<li><b style="color:${f.level==='critical'?'var(--red)':f.level==='danger'?'var(--red)':f.level==='warn'?'var(--amber)':'var(--green)'}">${esc(f.tipe)}</b> — ${esc(f.ket||'')}</li>`).join('') || '<li>Tidak ada flag</li>'}
+          ${rk.jumlah_holder?`<li>Jumlah holder: ${rk.jumlah_holder}</li>`:''}
+          ${rk.top10_pct?`<li>Top-10 holder: ${rk.top10_pct}% supply</li>`:''}
+        </ul></details>
+      ${rs && rs.skor!=null ? `<details style="margin-top:6px;font-size:.78rem"><summary style="cursor:pointer;color:var(--amber)">📊 Data riset KoinScan (skor ${rs.skor})</summary>
+        <ul style="margin:6px 0 0 18px;color:var(--dim)">
+          <li>Pertumbuhan sejak terpantau: ${rs.growth}×</li><li>Konsistensi naik: ${rs.konsisten} poll</li>
+          <li>Umur: ${rs.umur_jam} jam</li>${(rs.alasan||[]).map(a=>`<li>${esc(a)}</li>`).join('')}
+        </ul></details>`
+        : '<div style="font-size:.75rem;color:var(--dim);margin-top:6px">📊 Belum ada data riset (koin belum pernah terlacak tracker).</div>'}
+      <div style="margin-top:8px;font-size:.75rem"><a href="https://pump.fun/coin/${esc(m)}" target="_blank" rel="noopener">buka pump.fun ↗</a> ·
+        <a href="/grafik?mint=${esc(m)}">📈 grafik</a> ·
+        <a href="https://dexscreener.com/solana/${esc(m)}" target="_blank" rel="noopener">DexScreener ↗</a> ·
+        <a href="#" onclick="tambahWl('${esc(m)}');return false" style="color:var(--amber)">📌 + pantau di watchlist</a></div>
+    </div>`;
+  }catch(e){ el.innerHTML = '<p style="color:var(--red)">Gagal menganalisa. Coba lagi.</p>'; }
+}
+function tambahWl(m){
+  try{
+    const a = JSON.parse(localStorage.getItem('koinscan_wl')||'[]');
+    if (!a.includes(m)) a.unshift(m);
+    localStorage.setItem('koinscan_wl', JSON.stringify(a.slice(0,20)));
+    alert('Ditambahkan ke watchlist 📌');
+  }catch(e){}
+}
+document.getElementById('mint').addEventListener('keydown', e=>{ if(e.key==='Enter') cek(); });
+// dukung deep-link dari halaman sinyal
+const pre = sessionStorage.getItem('cek_mint');
+if (pre){ document.getElementById('mint').value = pre; sessionStorage.removeItem('cek_mint'); cek(); }
+</script>
+</body>
+</html>

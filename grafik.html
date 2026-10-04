@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan — Grafik Koin</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<div class="wrap">
+  <header>
+  <div class="dalam">
+  <h1><a href="/">KoinScan <span>SOL</span></a></h1>
+    <p class="sub">Analisa meme coin Solana real-time</p>
+  </div>
+</header>
+  <div id="nav"></div>
+  <div class="cari">
+    <input id="mint" placeholder="Tempel alamat kontrak (CA) koin Solana…" autocomplete="off">
+    <button class="btn" onclick="muatGrafik()">Tampilkan Grafik</button>
+  </div>
+
+  <div id="kepala" class="card" style="display:none">
+    <div class="kepala-koin">
+      <div>
+        <div class="nama-koin"><span id="g-logo"></span><b id="g-simbol">–</b> <span id="g-nama" class="dim"></span></div>
+        <div class="mint-kecil" id="g-mint"></div>
+      </div>
+      <div class="harga-box">
+        <div class="harga" id="g-harga">–</div>
+        <div id="g-ubah" class="ubah">–</div>
+      </div>
+    </div>
+    <div class="angka-baris" id="g-angka"></div>
+    <div class="sumber" id="g-sumber"></div>
+    <div id="g-risiko" style="margin-top:12px;font-size:.76rem"></div>
+    <div id="g-ai" style="margin-top:12px"></div>
+  </div>
+
+  <div id="panel" class="card" style="display:none">
+    <div class="chart-atas">
+      <div class="tab" id="tab-waktu"></div>
+      <div class="tab" id="tab-volume"></div>
+    </div>
+    <div class="canvas-box">
+      <canvas id="cv" width="1000" height="420"></canvas>
+      <div id="tip" class="tip"></div>
+    </div>
+  </div>
+
+  <p id="kosong" class="kotak-kosong">Masukkan alamat kontrak koin untuk melihat grafik harga &amp; market cap.</p>
+<footer>
+  <div>Data: GeckoTerminal OHLCV · riwayat tick KoinScan — diproses mandiri.</div>
+  <div class="foot-by">KoinScan by <b>arifrfza</b></div>
+</footer>
+</div>
+
+<script src="/static/app.js?v=27"></script>
+<script src="/static/nav.js?v=9"></script>
+<script>
+/* ---- util ---- */
+const el = id => document.getElementById(id);
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
+function fmtG(x,d){ if(x==null||isNaN(x)) return '–';
+  if(x>=1e9) return '$'+(x/1e9).toFixed(2)+'B'; if(x>=1e6) return '$'+(x/1e6).toFixed(2)+'M';
+  if(x>=1e3) return '$'+(x/1e3).toFixed(1)+'K';
+  return '$'+((+x).toPrecision(d||4)); }
+function hargaKecil(x){ if(x==null||isNaN(x)) return '–';
+  if(x>=1) return '$'+(+x).toPrecision(5); if(x>=0.01) return '$'+(+x).toPrecision(4);
+  return '$'+(+x).toPrecision(3); }
+
+let DATA = null, RENTANG = '24j', TAMPIL_VOL = false, RENTANG_MANUAL = false;
+let MINT = null, CROSSHAIR = null, LOADING = false;
+
+const RENTANG_MAP = {
+  '1j':  {detik: 60*60,    label:'1 jam'},
+  '4j':  {detik: 4*3600,   label:'4 jam'},
+  '24j': {detik: 24*3600,  label:'24 jam'},
+  '48j': {detik: 48*3600,  label:'48 jam'},
+};
+const UP = '#0e9e68', DOWN = '#ea3943', GRID = 'rgba(23,28,38,.07)', TXT = '#667085';
+
+/* ---- ambil data ---- */
+const WARNA_RISIKO = {"HINDARI":"var(--down)","HATI-HATI":"var(--warn)","RELATIF AMAN":"var(--up)"};
+async function muatRisiko(mint) {
+  const host = document.getElementById('g-risiko');
+  if (!host) return;
+  host.innerHTML = '<span class="dim2">menganalisa risiko…</span>';
+  try {
+    const r = await (await fetch('/api/cek?mint=' + mint)).json();
+    const v = r.verdict || {};
+    const warna = WARNA_RISIKO[v.level] || 'var(--dim)';
+    const flag = (r.risiko?.flag || []).map(f => f.tipe).join(', ') || 'tidak ada';
+    host.innerHTML = '<b style="color:' + warna + '">' + (v.level || '–') + '</b>' +
+      (v.pesan ? ' — ' + v.pesan : '') +
+      '<div class="dim2" style="font-size:.66rem;margin-top:3px">Flag: ' + flag + '</div>';
+  } catch(e) { host.textContent = ''; }
+}
+
+async function muatAI(mint) {
+  const host = document.getElementById('g-ai');
+  if (!host) return;
+  host.innerHTML = '<span class="dim2">🤖 AI menganalisa…</span>';
+  try {
+    const a = await (await fetch('/api/analisa?mint=' + mint)).json();
+    if (a.error) { host.innerHTML = ''; return; }
+    const warna = a.skor_ai>=75?'#0e9e68':a.skor_ai>=60?'#16c784':a.skor_ai>=45?'#b45309':a.skor_ai>=30?'#f97316':'#ea3943';
+    host.innerHTML = `<div style="background:#f4f6fb;border:1px solid #e5e9f0;border-radius:12px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="font-size:.8rem">🤖 Analisa AI</b>
+        <span style="background:${warna};color:#fff;border-radius:999px;padding:3px 10px;font-weight:800;font-size:.72rem">${a.skor_ai}/100 · ${a.putusan}</span>
+      </div>
+      ${a.kekuatan.length?`<div style="color:#0e9e68;font-size:.72rem;line-height:1.5">✅ ${a.kekuatan.join(' · ')}</div>`:''}
+      ${a.hati_hati.length?`<div style="color:#b45309;font-size:.72rem;line-height:1.5;margin-top:4px">⚠️ ${a.hati_hati.join(' · ')}</div>`:''}
+      <div class="dim2" style="font-size:.64rem;margin-top:6px">Riset otomatis multi-faktor (momentum, likuiditas, volume, risiko, pertumbuhan) — bukan saran finansial.</div>
+    </div>`;
+  } catch(e) { host.innerHTML = ''; }
+}
+
+async function muatLogo(mint) {
+  try {
+    const r = await (await fetch('/api/logo?mint=' + mint)).json();
+    el('g-logo').innerHTML = r.logo
+      ? '<img src="' + r.logo + '" alt="" onerror="this.remove()">'
+      : '';
+  } catch(e) {}
+}
+
+async function muatGrafik(mintParam){
+  const mint = (mintParam || el('mint').value).trim();
+  if (!mint || LOADING) return;
+  LOADING = true;
+  el('kosong').textContent = 'Memuat data grafik…';
+  el('kosong').style.display = 'block';
+  el('panel').style.display = 'none';
+  el('kepala').style.display = 'none';
+  try{
+    const r = await fetch('/api/grafik?mint=' + encodeURIComponent(mint));
+    const d = await r.json();
+    if (d.error){ el('kosong').textContent = '❌ ' + d.error; return; }
+    DATA = d; MINT = d.mint || mint;
+    if (!d.candles.length && !d.points.length){
+      el('kosong').innerHTML = 'Grafik belum terbentuk untuk koin ini.<br><span class="dim" style="font-size:.72rem">Koin bonding curve pump.fun butuh beberapa menit terlacak tick agar grafik terbentuk. Koin multi-chain (Ethereum/BSC/Base/TON) mendapat candle GeckoTerminal dan snapshot harga yang menumpuk tiap kali halaman dibuka — buka lagi beberapa saat lagi.</span>';
+      return;
+    }
+    if ((d.points.length < 4) && !d.candles.length){
+      el('kosong').innerHTML = `<div style="padding:18px 8px;text-align:center">
+        <div style="font-weight:700;margin-bottom:6px">Grafik mulai terbentuk (${d.points.length} titik)</div>
+        <div class="dim" style="font-size:.78rem">Data ${d.sumber ? 'dari ' + d.sumber : ''} menumpuk otomatis setiap kali halaman dibuka. Buka ulang dalam beberapa menit untuk grafik lengkap.</div>
+        <button class="tab-btn" style="margin-top:10px" onclick="location.reload()">Muat ulang</button></div>`;
+      return;
+    }
+    el('kosong').style.display = 'none';
+    el('kepala').style.display = 'block';
+    el('panel').style.display = 'block';
+    el('g-simbol').textContent = d.simbol || '?';
+    muatLogo(MINT);
+    muatRisiko(MINT);
+    muatAI(MINT);
+    el('g-nama').textContent = d.nama || '';
+    el('g-mint').textContent = MINT;
+    el('g-sumber').textContent = 'Sumber: ' + (d.sumber || '–');
+    // auto-pilih rentang terluas yang punya >=4 titik
+    const rentangUrut = ['48j','24j','4j','1j'];
+    if (!RENTANG_MANUAL){
+      RENTANG = '24j';
+      for (const k of rentangUrut){
+        const dari = Date.now()/1000 - RENTANG_MAP[k].detik;
+        const sumber = (DATA.candles.length ? DATA.candles.map(c=>c[0]/1000) : DATA.points.map(p=>p[0]));
+        if (sumber.filter(t=>t>=dari).length >= 4){ RENTANG = k; break; }
+      }
+    }
+    gambar();
+  }catch(e){ el('kosong').textContent = 'Gagal memuat data grafik.'; }
+  finally { LOADING = false; }
+}
+function setRentang(k){ RENTANG = k; RENTANG_MANUAL = true; gambar(); }
+function toggleVol(){ TAMPIL_VOL = !TAMPIL_VOL; gambar(); }
+
+/* ---- seri utk rentang aktif ---- */
+function seriAktif(){
+  if (!DATA) return [];
+  const dari = Date.now()/1000 - RENTANG_MAP[RENTANG].detik;
+  let seri = DATA.candles.length
+    ? DATA.candles.filter(c => c[0]/1000 >= dari).map(c => ({t:c[0]/1000, v:c[4], o:c[1], h:c[2], l:c[3], vol:c[5]}))
+    : DATA.points.filter(p => p[0] >= dari).map(p => ({t:p[0], v:p[1]}));
+  if (seri.length < 2) seri = DATA.candles.length
+    ? DATA.candles.slice(-60).map(c => ({t:c[0]/1000, v:c[4], o:c[1], h:c[2], l:c[3], vol:c[5]}))
+    : DATA.points.slice(-720).map(p => ({t:p[0], v:p[1]}));
+  return seri;
+}
+
+/* ---- harga terakhir + ringkasan ---- */
+function ringkas(seri){
+  if (!DATA || !seri.length) return null;
+  if (DATA.candles.length){
+    const akhir = seri[seri.length-1], awal = seri[0];
+    const harga = akhir.v, terbuka = awal.o || awal.v;
+    const vs = seri.map(x=>x.h ?? x.v);
+    return {mode:'candle', harga, ubah:(harga-terbuka)/(terbuka||1)*100,
+            tinggi:Math.max(...vs), rendah:Math.min(...seri.map(x=>x.l ?? x.v))};
+  }
+  const vs = seri.map(x=>x.v);
+  const v = vs[vs.length-1], v0 = vs[0];
+  return {mode:'mc', mc:v, ubah:(v-v0)/(v0||1)*100, tinggi:Math.max(...vs), rendah:Math.min(...vs)};
+}
+
+/* ---- gambar chart ---- */
+function gambar(){
+  const cv = el('cv'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const seri = seriAktif();
+  const r = ringkas(seri);
+  if (!r || seri.length < 2) return;
+  const isPrice = DATA.unit === 'price';
+
+  // tombol rentang & volume (refresh status aktif)
+  el('tab-waktu').innerHTML = Object.keys(RENTANG_MAP).map(k =>
+    `<button class="tab-btn ${k===RENTANG?'on':''}" onclick="setRentang('${k}')">${RENTANG_MAP[k].label}</button>`).join('');
+  el('tab-volume').innerHTML = `<button class="tab-btn ${TAMPIL_VOL?'on':''}" onclick="toggleVol()">Volume</button>`;
+
+  // info kepala
+  const naik = r.ubah >= 0;
+  if (r.mode === 'candle'){
+    el('g-harga').textContent = hargaKecil(r.harga);
+    el('g-ubah').textContent = `${naik?'+':''}${r.ubah.toFixed(2)}% (${RENTANG_MAP[RENTANG].label})`;
+  } else {
+    el('g-harga').textContent = isPrice ? hargaKecil(r.mc) : fmtG(r.mc);
+    el('g-ubah').textContent = `${naik?'+':''}${r.ubah.toFixed(1)}% sejak terpantau`;
+  }
+  el('g-ubah').className = 'ubah ' + (naik ? 'up' : 'down');
+  const f = isPrice ? hargaKecil : fmtG;
+  el('g-angka').innerHTML = r.mode === 'candle'
+    ? `<span>Tertinggi <b>${hargaKecil(r.tinggi)}</b></span><span>Terendah <b>${hargaKecil(r.rendah)}</b></span>
+       <span>Candle <b>${seri.length}</b></span>`
+    : `<span>${isPrice?'Harga':'Market cap'} <b>${f(r.mc)}</b></span>
+       <span>Tertinggi <b>${f(r.tinggi)}</b></span><span>Terendah <b>${f(r.rendah)}</b></span>
+       <span>Titik data <b>${seri.length}</b></span>`;
+  const warna = naik ? UP : DOWN;
+
+  // skala
+  const pad = {l:64, r:14, t:18, b:34};
+  const lw = W - pad.l - pad.r, lh = H - pad.t - pad.b;
+  const vs = seri.map(s=>s.v), vMax = Math.max(...vs), vMin = Math.min(...vs);
+  const atas = vMax + (vMax-vMin)*0.08 || vMax*1.1 || 1, bawah = Math.max(0, vMin - (vMax-vMin)*0.08);
+  const tMin = seri[0].t, tMax = seri[seri.length-1].t;
+  const X = t => pad.l + (t - tMin)/((tMax - tMin)||1) * lw;
+  const Y = v => pad.t + lh - (v - bawah)/((atas - bawah)||1) * lh;
+
+  // grid + label sumbu
+  ctx.font = '11px "JetBrains Mono", ui-monospace, monospace';
+  ctx.strokeStyle = GRID; ctx.fillStyle = TXT;
+  for (let i=0;i<=4;i++){
+    const y = pad.t + lh*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+    const val = atas - (atas-bawah)*i/4;
+    ctx.textAlign = 'right';
+    ctx.fillText(isPrice || r.mode==='candle' ? hargaKecil(val) : fmtG(val), pad.l-8, y+4);
+  }
+  ctx.textAlign = 'center';
+  for (let i=0;i<=4;i++){
+    const t = tMin + (tMax-tMin)*i/4;
+    const d = new Date(t*1000);
+    const lbl = RENTANG_MAP[RENTANG].detik <= 48*3600
+      ? d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})
+      : d.toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
+    ctx.fillText(lbl, pad.l + lw*i/4, H-12);
+  }
+
+  // area + garis harga (glow halus)
+  ctx.save();
+  ctx.beginPath();
+  seri.forEach((s,i) => i ? ctx.lineTo(X(s.t), Y(s.v)) : ctx.moveTo(X(s.t), Y(s.v)));
+  ctx.strokeStyle = warna; ctx.lineWidth = 2; ctx.stroke();
+  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t+lh);
+  grad.addColorStop(0, warna + '3d'); grad.addColorStop(1, warna + '00');
+  ctx.lineTo(X(seri[seri.length-1].t), pad.t+lh); ctx.lineTo(X(seri[0].t), pad.t+lh);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+  ctx.restore();
+
+  // volume batang (opsional, skala benar per-candle)
+  if (TAMPIL_VOL && DATA.candles.length && seri.some(s=>s.vol)){
+    const vmax = Math.max(...seri.map(s=>s.vol||0)) || 1;
+    seri.forEach(s => {
+      if (!s.vol) return;
+      const h = Math.max(2, (s.vol/vmax) * 26);
+      ctx.fillStyle = s.v >= (s.o||s.v) ? 'rgba(47,213,123,.35)' : 'rgba(255,84,112,.35)';
+      ctx.fillRect(X(s.t)-2, pad.t+lh-h, 4, h);
+    });
+  }
+
+  // crosshair hover
+  if (CROSSHAIR){
+    const cx = Math.max(pad.l, Math.min(W-pad.r, CROSSHAIR.x));
+    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t+lh); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // titik terakhir berdenyut
+  const akhir = seri[seri.length-1];
+  ctx.beginPath(); ctx.arc(X(akhir.t), Y(akhir.v), 6, 0, Math.PI*2);
+  ctx.fillStyle = warna + '33'; ctx.fill();
+  ctx.beginPath(); ctx.arc(X(akhir.t), Y(akhir.v), 3.2, 0, Math.PI*2);
+  ctx.fillStyle = warna; ctx.fill();
+
+  // skala utk interaksi
+  cv._skala = {pad, lw, lh, tMin, tMax, atas, bawah, seri, mode:r.mode, X, Y, isPrice, W};
+}
+
+/* interaksi pointer: crosshair + tooltip (mouse & sentuh) */
+function pasangInteraksi(){
+  const cv = el('cv');
+  const cari = (px, py) => {
+    const s = cv._skala; if (!s) return null;
+    let dekat = null, dmin = 1e9;
+    for (const p of s.seri){
+      const dx = Math.abs(s.X(p.t) - px);
+      if (dx < dmin){ dmin = dx; dekat = p; }
+    }
+    return (dekat && dmin < 60 && py > s.pad.t-14 && py < s.pad.t+s.lh+14) ? {p:dekat, s} : null;
+  };
+  const tunjuk = (ev) => {
+    const s = cv._skala; if (!s) return;
+    const rect = cv.getBoundingClientRect();
+    const px = (ev.clientX - rect.left) * (cv.width/rect.width);
+    const py = (ev.clientY - rect.top) * (cv.height/rect.height);
+    const hsl = cari(px, py);
+    const tip = el('tip');
+    if (hsl){
+      const {p, s:sk} = hsl;
+      CROSSHAIR = {x: sk.X(p.t)};
+      const jam = new Date(p.t*1000).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      const fmtV = sk.isPrice || sk.mode==='candle' ? hargaKecil(p.v) : (sk.isPrice ? hargaKecil(p.v) : fmtG(p.v));
+      let isi = `<b>${fmtV}</b><br><span class="dim2">${jam}</span>`;
+      if (p.h != null) isi += `<br><span class="up" style="font-size:.62rem">H ${hargaKecil(p.h)}</span> <span class="down" style="font-size:.62rem">L ${hargaKecil(p.l)}</span>`;
+      if (p.vol) isi += `<br><span class="dim2" style="font-size:.62rem">Vol ${fmtG(p.vol)}</span>`;
+      tip.innerHTML = isi;
+      tip.style.display = 'block';
+      const pxTip = sk.X(p.t) / (cv.width/rect.width);
+      tip.style.left = Math.min(pxTip, rect.width-130) + 'px';
+      tip.style.top = Math.max(sk.Y(p.v)/(cv.height/rect.height)-60, 4) + 'px';
+      gambar();
+    } else {
+      if (CROSSHAIR){ CROSSHAIR = null; gambar(); }
+      tip.style.display = 'none';
+    }
+  };
+  cv.onmousemove = tunjuk;
+  cv.ontouchmove = e => { tunjuk(e.touches[0]); };
+  cv.ontouchstart = e => { tunjuk(e.touches[0]); };
+  cv.onmouseleave = () => { CROSSHAIR = null; el('tip').style.display='none'; gambar(); };
+}
+pasangInteraksi();
+
+/* ---- deep-link: /grafik?mint=... ---- */
+const q = new URLSearchParams(location.search).get('mint') || sessionStorage.getItem('grafik_mint');
+if (q){ el('mint').value = q; sessionStorage.removeItem('grafik_mint'); muatGrafik(q); }
+el('mint').addEventListener('keydown', e => { if (e.key === 'Enter') muatGrafik(); });
+window.addEventListener('resize', () => { const cv = el('cv');
+  cv.width = Math.min(1000, Math.max(320, cv.parentElement.clientWidth - 4)); gambar(); });
+
+/* auto-refresh tiap 30 detik (tanpa kehilangan rentang manual) */
+setInterval(() => { if (MINT && el('panel').style.display !== 'none') muatGrafik(MINT); }, 30000);
+</script>
+</body>
+</html>

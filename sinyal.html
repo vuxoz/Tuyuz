@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan — Sinyal Langsung</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<div class="wrap">
+  <header>
+  <div class="dalam">
+  <h1><a href="/">KoinScan <span>SOL</span></a></h1>
+    <p class="sub"><span class="live"></span>Sinyal real-time · analisa diperbarui tiap 1 menit</p>
+  </div>
+</header>
+  <div id="nav"></div>
+  <div class="stats" id="tickstat"></div>
+
+  <h2 class="baris">KOIN SUDAH DIANALISA <span class="ket">skor AI dihitung ulang tiap 1 menit dari data live</span></h2>
+  <div id="daftar-analisa"></div>
+
+  <h2 class="baris">SINYAL LANGSUNG <span class="ket">🚀 melonjak ≥2×/30mnt · spike ≥+30%/15mnt · dekat graduation · 🆕 koin baru</span></h2>
+  <div id="daftar"></div>
+
+  <footer>
+    <div>Sinyal dihasilkan otomatis dari tick 20 detik · skor AI di-refresh 60 detik · pump.fun · bukan saran beli.</div>
+    <div class="foot-by">KoinScan by <b>arifrfza</b></div>
+  </footer>
+</div>
+<script src="/static/app.js?v=27"></script>
+<script src="/static/nav.js?v=9"></script>
+<script>
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]))}
+function lalu(ts){
+  const m = Math.round((Date.now()/1000 - ts)/60);
+  return m<1 ? 'baru saja' : m<60 ? m+' menit lalu' : Math.round(m/60)+' jam lalu';
+}
+const WARNA = {"GRADUATED":"#0e9e68","SPIKE":"#ea3943","MELONJAK":"#d93025","POTENSI":"#16c784","DEKAT-LULUS":"#eab308","BARU-RILIS":"#667085"};
+const LABEL = {"GRADUATED":"🎓 GRADUATED","SPIKE":"🌋 SPIKE","MELONJAK":"🚀 MELONJAK","POTENSI":"📈 POTENSI","DEKAT-LULUS":"🎯 DEKAT LULUS","BARU-RILIS":"🆕 BARU RILIS"};
+
+function warnaAI(sk){
+  return sk>=75?'#0e9e68':sk>=60?'#16c784':sk>=45?'#b45309':sk>=30?'#f97316':'#ea3943';
+}
+function logoHTMLs(img, simbol){
+  if (!img) return '';
+  const chain = JSON.stringify(ipfsChain(img)).replace(/"/g,'&quot;');
+  return `<img src="${esc(img)}" alt="" data-chain="${chain}" onerror="cobaGatewayBerikutnya(this)">`;
+}
+function proyekHTML(s){
+  const p = s.proyek || {};
+  let html = '';
+  if (p.deskripsi) html += `<p class="proyek-desc">${esc(p.deskripsi.slice(0,220))}${p.deskripsi.length>220?'…':''}</p>`;
+  const link = [];
+  if (p.website) link.push(`<a href="${esc(p.website)}" target="_blank" rel="noopener">🌐 website</a>`);
+  if (p.twitter) link.push(`<a href="${esc(p.twitter)}" target="_blank" rel="noopener">𝕏 twitter</a>`);
+  if (p.telegram) link.push(`<a href="${esc(p.telegram)}" target="_blank" rel="noopener">✈️ telegram</a>`);
+  if (link.length) html += `<div class="proyek-link">${link.join(' ')}</div>`;
+  if (!html) html = '<p class="dim2" style="font-size:.68rem">Belum ada info proyek publik.</p>';
+  return html;
+}
+function risikoHTML(s){
+  const r = s.risiko;
+  if (!r) return '';
+  const put = r.putusan || '';
+  if (put === 'TIDAK-DIKETAHUI') return '';
+  const warna = put === 'AMAN-RELATIF' ? '#0e9e68' : put === 'HATI-HATI' ? '#b45309' : '#ea3943';
+  return `<span class="badge" style="color:${warna};font-weight:700">🛡 ${esc(put)}</span>`;
+}
+function aiHTML(s){
+  if (s.skor_ai == null) return '';
+  const w = warnaAI(s.skor_ai);
+  let html = `<div class="ai-box" style="margin-top:8px;background:#f4f6fb;border:1px solid #e5e9f0;border-radius:10px;padding:9px 11px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <b style="font-size:.74rem">🤖 Analisa AI</b>
+      <span style="background:${w};color:#fff;border-radius:999px;padding:2px 9px;font-weight:800;font-size:.66rem">${s.skor_ai}/100 · ${esc(s.putusan_ai||'')}</span>
+    </div>`;
+  if (s.ai_kekuatan && s.ai_kekuatan.length) html += `<div style="color:#0e9e68;font-size:.7rem;margin-top:4px">✅ ${esc(s.ai_kekuatan.join(' · '))}</div>`;
+  if (s.ai_hati && s.ai_hati.length) html += `<div style="color:#b45309;font-size:.7rem;margin-top:3px">⚠️ ${esc(s.ai_hati.join(' · '))}</div>`;
+  return html + '</div>';
+}
+function barisAngka(s){
+  const umur = s.umur_jam != null ? (s.umur_jam<1 ? Math.round(s.umur_jam*60)+' mnt' : s.umur_jam.toFixed(1)+' j') : '–';
+  const g = s.kenaikan_pct != null ? `<b class="${s.kenaikan_pct>=0?'up':'down'}">${s.kenaikan_pct>=0?'+':''}${s.kenaikan_pct.toFixed(1)}%</b>` : '–';
+  return `<div class="angka-baris" style="margin-top:8px">
+    <span>MC <b>$${(s.mc_live||0).toLocaleString('en-US')}</b></span>
+    <span>sejak analisa <b>${g}</b></span>
+    <span>umur <b>${umur}</b></span>
+    <span>💬 <b>${s.reply||0}</b></span>
+    ${risikoHTML(s)}
+  </div>`;
+}
+
+async function muat(){
+  try{
+    const r = await fetch('/api/sinyal?limit=60');
+    const d = await r.json();
+    document.getElementById('tickstat').innerHTML =
+      `<div class="stat"><b>${d.tick?.aktif_2menit ?? '–'}</b>koin dilacak (2 menit terakhir)</div>
+       <div class="stat"><b>${d.tick?.total_dilacak_tick ?? '–'}</b>total koin dilacak</div>
+       <div class="stat"><b>60 detik</b>interval analisa</div>
+       <div class="stat"><b>${d.waktu || '–'}</b>update terakhir</div>`;
+
+    /* ---- koin sudah dianalisa (punya skor AI) ---- */
+    const teranalisa = (d.koin_analisa||[]); // selalu terisi — refresh 1 menit dari analisa_cepat
+    const hostA = document.getElementById('daftar-analisa');
+    hostA.innerHTML = teranalisa.length ? teranalisa.map(s => `
+      <div class="sinyal kartu-sinyal" style="border-left:3px solid ${warnaAI(s.skor_ai)}">
+        <div class="sinyal-atas">
+          <div class="sinyal-nama">
+            <a class="logo-sinyal" href="/grafik?mint=${s.mint}">${logoHTMLs(s.img, s.simbol)}</a>
+            <div>
+              <div><a class="koin-link" href="/grafik?mint=${s.mint}"><b>${esc(s.simbol)}</b></a>
+                <span class="badge tipe" style="color:${warnaAI(s.skor_ai)}">${s.skor_ai}/100 · ${esc(s.putusan_ai||'')}</span>
+                ${s.tipe && s.tipe!=='BARU-RILIS' ? `<span class="badge" style="color:${WARNA[s.tipe]||'inherit'}">${LABEL[s.tipe]||''}</span>`:''}</div>
+              <span class="dim" style="font-weight:400;font-size:.78rem">${esc((s.nama||'').slice(0,28))}</span>
+            </div>
+          </div>
+          <div class="sinyal-waktu">dianalisa ${lalu(s.waktu)}</div>
+        </div>
+        ${barisAngka(s)}
+        ${aiHTML(s)}
+        <div class="proyek-detail">${proyekHTML(s)}</div>
+        <div class="sinyal-aksi">
+          <a href="/grafik?mint=${s.mint}">📈 grafik</a>
+          <a href="https://pump.fun/coin/${s.mint}" target="_blank" rel="noopener">pump.fun ↗</a>
+        </div>
+      </div>`).join('')
+      : '<p class="kosong">Belum ada koin dengan skor AI — analisa berjalan tiap 60 detik, cek lagi sebentar.</p>';
+
+    /* ---- sinyal langsung (semua event) ---- */
+    const host = document.getElementById('daftar');
+    if (!d.sinyal || !d.sinyal.length){
+      host.innerHTML = '<p class="kosong">Belum ada sinyal. Tick berjalan — tunggu 1–2 menit.</p>'; return;
+    }
+    host.innerHTML = d.sinyal.map(s => `
+      <div class="sinyal kartu-sinyal" style="border-left:3px solid ${WARNA[s.tipe]||'var(--line)'}">
+        <div class="sinyal-atas">
+          <div class="sinyal-nama">
+            <a class="logo-sinyal" href="/grafik?mint=${s.mint}">${logoHTMLs(s.img, s.simbol)}</a>
+            <div>
+              <div><a class="koin-link" href="/grafik?mint=${s.mint}"><b>${esc(s.simbol)}</b></a>
+                <span class="badge tipe" style="color:${WARNA[s.tipe]||'inherit'}">${LABEL[s.tipe]||s.tipe}</span>
+                ${s.skor_ai != null ? `<span class="badge" style="color:${warnaAI(s.skor_ai)};font-weight:700">🤖 ${s.skor_ai}/100</span>`:''}</div>
+              <span class="dim" style="font-weight:400;font-size:.78rem">${esc((s.nama||'').slice(0,28))}</span>
+            </div>
+          </div>
+          <div class="sinyal-waktu">${lalu(s.waktu)} · MC $${Math.round(s.mc||s.mc_live||0).toLocaleString('en-US')}</div>
+        </div>
+        <div class="sinyal-ket">${esc(s.ket)}</div>
+        ${barisAngka(s)}
+        ${aiHTML(s)}
+        <div class="proyek-detail">${proyekHTML(s)}</div>
+        <div class="sinyal-aksi">
+          <a href="/grafik?mint=${s.mint}">📈 grafik</a>
+          <a href="/cek?mint=${s.mint}" onclick="sessionStorage.setItem('cek_mint','${s.mint}')">🔍 analisa</a>
+          <a href="https://pump.fun/coin/${s.mint}" target="_blank" rel="noopener">pump.fun ↗</a>
+        </div>
+      </div>`).join('');
+  }catch(e){}
+}
+muat(); setInterval(muat, 30000);
+</script>
+</body>
+</html>

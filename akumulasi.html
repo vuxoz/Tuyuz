@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan SOL — Akumulasi</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<div class="wrap">
+  <header>
+  <div class="dalam">
+  <h1><a href="/">KoinScan <span>SOL</span></a></h1>
+    <div class="sub"><span class="live"></span>🐋 AKUMULASI — TEKANAN BELI DOMINAN + MOMENTUM NAIK</div>
+  </div>
+</header>
+  <div id="nav"></div>
+  <div class="stats">
+    <div class="stat"><b id="st-total">–</b>Token dipindai</div>
+    <div class="stat"><b id="st-time">–</b>Update terakhir</div>
+  </div>
+  <h2>POLA AKUMULASI TERDETEKSI (Lolos Filter Scam)</h2>
+  <div class="tabel-wrap"><table class="mini" id="t"><thead><tr>
+    <th>#</th><th>Koin</th><th>Sumber</th><th class="r">Skor</th><th class="r">MC</th><th class="r">Liq</th>
+    <th class="r">1j</th><th class="r">24j</th><th class="r">Beli%</th></tr></thead><tbody></tbody></table></div>
+  <footer>
+  <div>Data: pump.fun · DexScreener · GeckoTerminal · RugCheck — diproses mandiri tanpa perantara.</div>
+  <div class="foot-by">KoinScan by <b>arifrfza</b></div>
+</footer>
+</div>
+<script src="/static/app.js?v=27"></script>
+<script src="/static/nav.js?v=9"></script>
+<script>
+async function muat() {
+  try {
+    const f = await ambilFeed();
+    const row = (k,i) => `<tr data-mint="${k.mint}" onclick="if(event.target.closest('a'))return;location='/grafik?mint=${k.mint}'">
+      <td>${i+1}</td>
+      <td><a class="koin-link" href="/grafik?mint=${k.mint}">${logoHTML(k,'logo-t')}<b>${k.simbol}</b></a> <span class="badge">${(k.nama||'').slice(0,16)}</span></td>
+      <td>${k.sumber}</td>
+      <td class="skor">${skorHTML(k.skor)}</td>
+      <td class="r">${fmt$(k.mc)}</td>
+      <td class="r">${fmt$(k.liq)}</td>
+      <td class="r">${pct(k.h1)}</td><td class="r">${pct(k.h24)}</td>
+      <td>${k.tekanan_beli}%</td>
+          </tr>`;
+    isi('#t', f.akumulasi || [], row, 'Belum ada pola akumulasi terdeteksi.');
+  } catch(e) {}
+}
+muat(); setInterval(muat, 120000);
+</script>
+</body>
+</html>

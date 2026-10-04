@@ -1,0 +1,354 @@
+/* KoinScan SOL — UI v5: terang bersih, hijau-emas, tipografi rapi */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+h1,h2,h3,.brand-nama,.judul-seksi,.stat-angka{font-family:'Sora','Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-.02em;}
+
+:root {
+  --bg: #f4f6fb;
+  --bg2: #ffffff;
+  --bg3: #eef1f7;
+  --line: #e3e7f0;
+  --txt: #171c26;
+  --dim: #667085;
+  --dim2: #98a1b3;
+  --green: #16c784;
+  --green-dark: #0e9e68;
+  --acc: #16c784;
+  --acc2: #f7b32b; --gold: #f7b32b;
+  --grad: linear-gradient(135deg, #17d98a, #0eb87a);
+  --grad2: linear-gradient(135deg, #ffd166, #f7b32b);
+  --up: #16c784; --down: #ea3943; --warn: #f59e0b;
+  --r: 14px;
+  --shadow: 0 1px 3px rgba(23,28,38,.06), 0 6px 20px rgba(23,28,38,.05);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+img, canvas, table { max-width:100%; }
+body { overflow-x:hidden; }
+/* tabel: di ponsel biarkan menyusut, kolom tak memaksa lebar */
+table.mini td, table.mini th { white-space:normal; word-break:break-word; }
+html { -webkit-text-size-adjust:100%; }
+body {
+  background:var(--bg); color:var(--txt); min-height:100vh;
+  font-family:'Plus Jakarta Sans','Inter',system-ui,-apple-system,sans-serif;
+  font-size:13.5px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  letter-spacing:-.005em;
+}
+td,.num,.skor,.harga { font-variant-numeric:tabular-nums; }
+.wrap { max-width:960px; margin:0 auto; padding:0 14px 64px; }
+.dim { color:var(--dim); } .dim2 { color:var(--dim2); }
+a { color:var(--green-dark); text-decoration:none; }
+a:hover { text-decoration:underline; }
+
+/* ===== header PUTIH bersih (v5) — hijau hanya sebagai aksen kecil ===== */
+header { background:var(--bg2); border-bottom:1px solid var(--line); padding:18px 16px 12px; }
+header .dalam { max-width:960px; margin:0 auto; }
+h1 { font-size:1.26rem; font-weight:800; color:var(--txt); letter-spacing:-.02em;
+  display:flex; align-items:center; gap:8px; line-height:1.2; }
+h1 a { color:var(--txt); display:inline-flex; align-items:center; gap:10px; }
+h1 a:hover { text-decoration:none; }
+h1 span { color:var(--green-dark); font-weight:800; }
+.sub { color:var(--dim); font-size:.66rem; margin-top:5px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase;
+  display:flex; align-items:center; gap:6px; line-height:1.4; }
+.live { display:inline-block; width:7px; height:7px; border-radius:50%;
+  background:var(--green); margin-right:6px; flex:0 0 auto; animation:pulse 1.6s infinite; }
+@keyframes pulse { 50% { opacity:.4; } }
+
+/* nav pill putih */
+.nav { display:flex; flex-wrap:wrap; gap:7px;
+  padding:12px 0 6px; }
+.nav::-webkit-scrollbar { display:none; }
+.nav-a { color:var(--dim); font-size:.78rem; font-weight:600; padding:8px 14px;
+  border-radius:999px; white-space:nowrap; background:var(--bg2);
+  border:1px solid var(--line); box-shadow:var(--shadow); transition:all .15s; flex:0 0 auto;
+  display:inline-flex; align-items:center; gap:6px; }
+.nav-a svg { color:var(--green-dark); transition:color .15s; }
+.nav-a:hover { color:var(--green-dark); border-color:var(--green); text-decoration:none; transform:translateY(-1px); }
+.nav-a.aktif { color:#fff; background:var(--grad); border-color:transparent;
+  box-shadow:0 3px 12px rgba(22,199,132,.35); }
+.nav-a.aktif svg { color:#fff; }
+
+/* disclaimer */
+.disk { display:flex; gap:8px; align-items:flex-start; color:var(--dim);
+  font-size:.7rem; padding:10px 13px; border-radius:var(--r);
+  background:var(--bg2); border:1px solid var(--line); margin:12px 0 14px;
+  box-shadow:var(--shadow); }
+.disk b { color:var(--txt); }
+
+/* stats */
+.stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px; }
+.stat { background:var(--bg2); border:1px solid var(--line); border-radius:var(--r);
+  padding:11px 14px; font-size:.66rem; color:var(--dim); box-shadow:var(--shadow); }
+.stat b { display:block; color:var(--txt); font-size:.98rem; font-weight:800; margin-bottom:1px; }
+
+h2 { font-size:.92rem; font-weight:800; margin:20px 0 10px; letter-spacing:-.01em; align-items:baseline; }
+h2.baris { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+h2 .ket { color:var(--dim2); font-size:.68rem; font-weight:500; }
+
+/* kartu koin */
+.koin { display:flex; gap:12px; align-items:center; background:var(--bg2);
+  border:1px solid var(--line); border-radius:var(--r); padding:11px 13px;
+  margin-bottom:8px; box-shadow:var(--shadow); transition:border-color .15s; }
+.koin:hover { border-color:var(--green); }
+.koin img, .koin 
+.logo-fallback { display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:.78rem; color:#fff; background:var(--grad2); }
+.koin-body { flex:1; min-width:0; }
+.koin-nama { font-weight:700; font-size:.88rem; display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+.koin-sumber { color:var(--dim2); font-size:.6rem; padding:2px 7px;
+  background:var(--bg3); border-radius:999px; font-weight:600; }
+.koin-meta { color:var(--dim); font-size:.7rem; margin-top:2px; }
+.koin-kanan { text-align:right; flex:0 0 auto; }
+.koin-skor { font-weight:800; color:var(--green-dark); font-size:.98rem; }
+.koin-ubah { font-size:.7rem; font-weight:600; }
+.badge { font-size:.6rem; padding:2px 8px; border-radius:999px; background:var(--bg3);
+  color:var(--dim); font-weight:600; }
+.badge-kuat { background:#e6faf1; color:var(--green-dark); }
+.badge-pot { background:#efedff; color:var(--acc2); }
+.badge-baru { background:#fff4e0; color:#b45309; }
+.badge-bahaya { background:#fdeaea; color:var(--down); }
+.up { color:var(--up); } .down { color:var(--down); }
+
+/* tabel */
+.tabel-wrap { border:1px solid var(--line); border-radius:var(--r);
+  overflow-x:auto; background:var(--bg2); box-shadow:var(--shadow);
+  -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:collapse; font-size:.76rem; min-width:560px; }
+th { background:#f8fafc; color:var(--dim); text-align:left; padding:10px 11px; vertical-align:middle;
+  font-weight:700; font-size:.6rem; letter-spacing:.08em; text-transform:uppercase;
+  border-bottom:1px solid var(--line); }
+td { padding:10px 11px; border-top:1px solid var(--line); white-space:nowrap; vertical-align:middle; }
+td.num, td.skor, th.r, td.r { text-align:right; }
+tbody tr:hover td { background:#f2fbf7; }
+.skor { font-weight:800; color:var(--green-dark); }
+.logo-t { width:24px; height:24px; border-radius:8px; object-fit:cover;
+  vertical-align:middle; margin-right:8px; background:var(--bg3); }
+table td a.koin-link { display:inline-flex; align-items:center; vertical-align:middle; }
+.kosong { color:var(--dim2); text-align:center; padding:30px 14px; font-size:.8rem; }
+
+/* tombol aksi ikon bulat */
+.aksi { display:inline-flex; gap:4px; }
+.aksi a { display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:9px; background:var(--bg3);
+  font-size:.8rem; transition:all .12s; }
+.aksi a:hover { background:#e6faf1; text-decoration:none; transform:translateY(-1px); }
+
+/* form */
+.cari { display:flex; gap:8px; margin-bottom:14px; }
+input[type=text], #mint { flex:1; min-width:0; background:var(--bg2);
+  border:1.5px solid var(--line); border-radius:12px; color:var(--txt);
+  padding:11px 14px; font-size:.82rem; font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  box-shadow:var(--shadow); }
+input::placeholder { color:var(--dim2); }
+input:focus { outline:none; border-color:var(--green); box-shadow:0 0 0 3px rgba(22,199,132,.15); }
+.btn { background:var(--green); color:#fff; border:0; border-radius:12px;
+  padding:11px 20px; font-weight:700; font-size:.8rem; cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif; transition:filter .15s; flex:0 0 auto;
+  box-shadow:0 2px 10px rgba(22,199,132,.3); }
+.btn:hover { filter:brightness(1.08); }
+.btn:active { transform:scale(.98); }
+
+/* panel */
+.panel { background:var(--bg2); border:1px solid var(--line);
+  border-radius:var(--r); padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+.panel ul { margin-left:16px; }
+.panel li { margin-bottom:6px; }
+
+/* sinyal & watchlist */
+.sinyal, .wl-item { border:1px solid var(--line); border-radius:var(--r);
+  padding:12px 14px; margin-bottom:8px; background:var(--bg2); box-shadow:var(--shadow); }
+.sinyal-atas, .wl-atas { display:flex; justify-content:space-between; align-items:center;
+  gap:8px; flex-wrap:wrap; }
+.sinyal-nama { font-weight:800; font-size:.88rem; }
+.sinyal-waktu { color:var(--dim2); font-size:.66rem; }
+.sinyal-ket { font-size:.76rem; color:var(--green-dark); font-weight:600; margin:3px 0 6px; }
+.sinyal-aksi { font-size:.7rem; }
+.sinyal-aksi a { margin-right:11px; }
+.wl-mint { color:var(--dim2); font-size:.64rem; word-break:break-all;
+  font-family:'JetBrains Mono',ui-monospace,monospace; }
+.wl-data { display:flex; gap:14px; flex-wrap:wrap; font-size:.76rem; margin-top:8px;
+  padding-top:8px; border-top:1px solid var(--line); }
+.wl-hapus { background:var(--bg3); border:0; color:var(--down);
+  border-radius:8px; padding:4px 10px; font-size:.66rem; font-weight:700; cursor:pointer; }
+
+/* kartu kategori */
+.kartu-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.kartu { background:var(--bg2); border:1px solid var(--line); border-radius:var(--r);
+  padding:15px; display:block; color:var(--txt); box-shadow:var(--shadow);
+  transition:border-color .15s, transform .12s; }
+.kartu:hover { border-color:var(--green); transform:translateY(-2px); text-decoration:none; }
+.kartu .judul { font-size:.84rem; font-weight:800; margin-bottom:2px; }
+.kartu .ket { color:var(--dim); font-size:.68rem; line-height:1.45; }
+.kartu .angka { color:var(--green-dark); font-size:1.15rem; font-weight:800; margin-top:8px; }
+
+/* grafik */
+.kepala-koin { display:flex; justify-content:space-between; align-items:flex-start;
+  gap:10px; flex-wrap:wrap; }
+.nama-koin { font-size:1.08rem; font-weight:800; display:flex; align-items:center; gap:10px; }
+.nama-koin img { width:38px; height:38px; border-radius:10px; object-fit:cover; background:var(--bg3); }
+.mint-kecil { color:var(--dim2); font-size:.64rem; font-family:'JetBrains Mono',ui-monospace,monospace;
+  word-break:break-all; margin-top:3px; }
+.harga-box { text-align:right; }
+.harga { font-size:1.5rem; font-weight:800; letter-spacing:-.02em; }
+.ubah { font-size:.76rem; font-weight:600; }
+.angka-baris { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px;
+  padding-top:11px; border-top:1px solid var(--line); font-size:.72rem; color:var(--dim); }
+.angka-baris b { color:var(--txt); font-weight:700; }
+.sumber { color:var(--dim2); font-size:.66rem; margin-top:9px; }
+.chart-atas { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px; max-width:100%; }
+.chart-atas .tab { flex-wrap:wrap; max-width:100%; }
+.tab { display:flex; gap:5px; }
+.tab-btn { background:var(--bg3); border:0; color:var(--dim);
+  border-radius:9px; padding:6px 12px; font-size:.7rem; cursor:pointer;
+  font-weight:700; transition:all .12s; }
+.tab-btn:hover { color:var(--txt); }
+.tab-btn.on { background:var(--green); color:#fff; }
+.canvas-box { position:relative; width:100%; }
+canvas { width:100%; height:auto; display:block; }
+.tip { position:absolute; display:none; pointer-events:none; background:var(--txt);
+  color:#fff; border-radius:8px; padding:5px 9px; font-size:.66rem;
+  font-family:'JetBrains Mono',ui-monospace,monospace; white-space:nowrap; z-index:2; }
+.kotak-kosong { color:var(--dim2); text-align:center; padding:34px 16px;
+  border:1.5px dashed var(--line); border-radius:var(--r); font-size:.8rem; background:var(--bg2); }
+
+/* ticker berjalan ala pump.fun */
+#ticker { background:var(--bg2); border:1px solid var(--line); border-radius:var(--r);
+  overflow:hidden; margin-top:12px; box-shadow:var(--shadow); }
+.ticker-dalam { display:flex; gap:28px; padding:9px 0; white-space:nowrap;
+  animation:jalan 45s linear infinite; width:max-content; }
+#ticker:hover .ticker-dalam { animation-play-state:paused; }
+@keyframes jalan { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+.tk { display:inline-flex; align-items:center; gap:7px; font-size:.74rem; font-weight:600; }
+.tk img, .tk .logo-fallback { width:20px; height:20px; border-radius:6px; }
+.tk .logo-fallback { font-size:.5rem; }
+
+/* footer */
+footer { margin-top:34px; padding-top:14px; border-top:1px solid var(--line);
+  color:var(--dim2); font-size:.66rem; line-height:1.65; }
+.foot-by { color:var(--dim); font-size:.74rem; font-weight:700; margin-top:5px; }
+.foot-by b { color:var(--green-dark); }
+
+/* ponsel */
+@media(max-width:640px){
+  .nav a { padding:6px 10px; font-size:11.5px; }
+  .wrap { padding:0 10px 52px; }
+  header { padding:12px 12px 2px; }
+  h1 { font-size:1.15rem; }
+  .stats { gap:6px; }
+  .kartu-grid { gap:6px; }
+  .disk { font-size:.64rem; }
+  table.mini { min-width:0; font-size:.72rem; }
+  table.mini th, table.mini td { padding:7px 8px; }
+  table { font-size:.72rem; min-width:520px; }
+  th,td { padding:7px 8px; }
+  .hide-m { display:none; }
+  .koin img, .koin .logo-fallback { width:36px; height:36px; }
+}
+
+/* ikon SVG nav v2 */
+.nav a { display:inline-flex; align-items:center; gap:6px; }
+.nav a svg { flex:0 0 auto; opacity:.9; }
+.nav a.aktif svg { opacity:1; }
+header h1 a { display:inline-flex; align-items:center; gap:8px; }
+header h1 a svg { filter:drop-shadow(0 1px 2px rgba(247,179,43,.25)); }
+
+.badge.src { background:rgba(124,108,255,.12); color:#5b4fd6; font-size:9.5px; padding:1px 6px; }
+.badge.flag { background:rgba(255,84,112,.12); color:#d63b57; font-size:9.5px; padding:1px 6px; font-weight:700; }
+
+.koin-link { color:inherit; text-decoration:none; border-bottom:1px dashed transparent; }
+.koin-link:hover b { color:var(--accent); }
+.koin-link:hover { border-bottom-color:var(--accent); }
+tr { cursor:pointer; }
+
+/* grafik v2 */
+.tab-btn { background:var(--bg3); border:1px solid var(--line); color:var(--dim);
+  border-radius:999px; padding:5px 12px; font-size:.72rem; font-weight:600; cursor:pointer;
+  font-family:inherit; transition:.15s; }
+.tab-btn.on { background:var(--grad); color:#fff; border-color:transparent; }
+.tab-btn:hover:not(.on) { border-color:var(--acc); color:var(--acc); }
+.chart-atas { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px; max-width:100%; }
+.chart-atas .tab { flex-wrap:wrap; max-width:100%; }
+.tab { display:flex; gap:6px; flex-wrap:wrap; }
+.canvas-box { position:relative; }
+.canvas-box canvas { width:100%; height:auto; display:block; border-radius:10px; }
+.tip { position:absolute; display:none; pointer-events:none; background:rgba(13,18,28,.94);
+  color:#e8edf5; border:1px solid rgba(255,255,255,.14); border-radius:9px; padding:7px 10px;
+  font-size:.72rem; line-height:1.45; box-shadow:0 6px 18px rgba(0,0,0,.4); z-index:5; }
+.harga { font-size:1.5rem; font-weight:800; }
+.up { color:var(--up); } .down { color:var(--down); }
+
+/* kartu sinyal kaya (gambar + proyek) */
+.kartu-sinyal { background:var(--bg2); border:1px solid var(--line); border-radius:var(--r);
+  padding:12px 14px; margin-bottom:10px; box-shadow:var(--shadow); }
+.sinyal-kepala { display:flex; align-items:center; gap:9px; }
+.sinyal-kepala .sinyal-waktu { margin-left:auto; flex:0 0 auto; }
+.logo-sinyal { display:inline-flex; width:38px; height:38px; border-radius:50%; overflow:hidden;
+  flex:0 0 auto; align-items:center; justify-content:center; margin-right:9px; background:var(--bg3); }
+.logo-sinyal img { width:100%; height:100%; object-fit:cover; }
+.sinyal-nama { display:flex; align-items:center; }
+.badge.tipe { font-size:.62rem; font-weight:800; letter-spacing:.4px; margin-left:6px; }
+.banner-slot .banner { width:100%; height:110px; object-fit:cover; border-radius:9px;
+  margin:9px 0 7px; display:block; border:1px solid var(--line); }
+.proyek-detail { margin-top:7px; }
+.proyek-desc { font-size:.78rem; color:var(--txt); line-height:1.5; margin:0 0 6px; }
+.proyek-link { display:flex; gap:8px; flex-wrap:wrap; }
+.proyek-link a { font-size:.7rem; font-weight:600; color:var(--acc); text-decoration:none;
+  background:rgba(22,199,132,.1); border-radius:999px; padding:3px 10px; }
+.proyek-link a:hover { background:var(--acc); color:#fff; }
+.sinyal-aksi { display:flex; gap:7px; flex-wrap:wrap; margin-top:9px; }
+.sinyal-aksi a { font-size:.7rem; font-weight:600; color:var(--acc); text-decoration:none;
+  border:1px solid var(--line); border-radius:999px; padding:4px 11px; background:var(--bg3); }
+.sinyal-aksi a:hover { border-color:var(--acc); }
+
+@media (max-width: 480px){table.mini td, table.mini th{padding:6px 4px;font-size:11px}table.mini .logo-t{width:20px;height:20px}}
+
+.wl-add { display:inline-flex; width:17px; height:17px; align-items:center; justify-content:center;
+  border-radius:6px; font-size:.72rem; line-height:1; color:var(--gold);
+  background:rgba(247,179,43,.12); cursor:pointer; user-select:none;
+  vertical-align:middle; margin-left:4px; transition:all .12s; }
+.wl-add:hover { background:rgba(247,179,43,.25); }
+
+/* === PENCARIAN KOIN GLOBAL === */
+#cari-box { position:relative; max-width:460px; margin:10px auto 0; display:flex; align-items:center; gap:8px;
+  background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:8px 12px;
+  box-shadow:0 1px 3px rgba(20,30,60,.05); transition:border-color .15s, box-shadow .15s; }
+#cari-box:focus-within { border-color:var(--gold); box-shadow:0 0 0 3px rgba(247,179,43,.14); }
+#cari-input { flex:1; border:0; outline:0; font:inherit; font-size:.9rem; background:transparent; color:var(--ink); }
+#cari-hasil { display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:60;
+  background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden;
+  box-shadow:0 10px 30px rgba(20,30,60,.14); }
+.cari-item { display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--ink);
+  text-decoration:none; border-bottom:1px solid var(--bg3); font-size:.86rem; }
+.cari-item:last-child { border-bottom:0; }
+.cari-item:hover { background:var(--bg3); }
+.cari-item img { width:22px; height:22px; border-radius:50%; object-fit:cover; }
+.cari-item b { min-width:64px; }
+.cari-item span { color:#6b7280; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+.cari-item i { font-style:normal; color:var(--gold); font-size:.72rem; }
+.cari-kosong { padding:10px 12px; color:#8a92a6; font-size:.84rem; }
+@media (max-width:640px){ #cari-box { margin:8px 12px 0; } }
+
+/* === UI v31: fitur pengguna === */
+thead th { position:sticky; top:0; background:var(--bg2); z-index:5; box-shadow:0 1px 0 var(--line); }
+tbody tr:hover td { background:rgba(247,179,43,.06); }
+.skor-badge { display:inline-flex; min-width:34px; justify-content:center; padding:2px 7px; border-radius:999px;
+  font-weight:700; font-size:.78rem; color:#fff; }
+.skor-hi  { background:linear-gradient(135deg,#16c784,#0e9c68); }
+.skor-mid { background:linear-gradient(135deg,#f7b32b,#d98f0e); }
+.skor-lo  { background:linear-gradient(135deg,#9aa1b2,#737b8c); }
+#ke-atas { position:fixed; right:16px; bottom:16px; z-index:70; width:42px; height:42px; border-radius:50%;
+  border:0; background:var(--ink); color:#fff; font-size:1.1rem; cursor:pointer; opacity:0;
+  pointer-events:none; transition:opacity .2s; box-shadow:0 4px 14px rgba(20,30,60,.25); }
+#ke-atas.tampil { opacity:.9; pointer-events:auto; }
+.skeleton { background:linear-gradient(90deg,var(--bg3) 25%,#e6e9f2 50%,var(--bg3) 75%);
+  background-size:200% 100%; animation:shimmer 1.2s infinite; border-radius:8px; height:14px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.copy-ca { cursor:pointer; border:0; background:rgba(247,179,43,.14); color:var(--gold); border-radius:6px;
+  font-size:.68rem; padding:2px 7px; margin-left:6px; vertical-align:middle; }
+.copy-ca:hover { background:rgba(247,179,43,.28); }
+
+/* v31b: cegah wrap di sel tabel & kolom koin, badge sejajar */
+.tabel-wrap table td, .tabel-wrap table th { white-space:nowrap; }
+.tabel-wrap table td:nth-child(2), .tabel-wrap table td:nth-child(2) a { white-space:nowrap; }
+.tabel-wrap table { table-layout:auto; }
+.copy-ca { white-space:nowrap; }

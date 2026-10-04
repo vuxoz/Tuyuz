@@ -1,0 +1,42 @@
+/* Tema gelap klasik — khusus halaman detail koin (/grafik) */
+:root {
+  --bg:#0b0e14; --bg2:#121722; --bg3:#1a2130; --line:#232c3d;
+  --text:#e8edf5; --dim:#8b96a8; --up:#2fd57b; --down:#ff5470;
+  --accent:#2fd57b; --warn:#ffb020;
+  --r:14px; --shadow:0 6px 24px rgba(0,0,0,.45);
+}
+body { background:
+  radial-gradient(900px 500px at 85% -10%, rgba(124,108,255,.12), transparent 60%),
+  radial-gradient(700px 400px at 0% 110%, rgba(47,213,123,.08), transparent 60%),
+  var(--bg);
+  color:var(--text); }
+header { background:linear-gradient(135deg,#131a2a,#0d1220); border-bottom:1px solid var(--line); }
+header h1 a, header h1 { color:var(--text); }
+header h1 span { color:var(--accent); }
+header .sub { color:var(--dim); }
+.nav a { background:var(--bg3); color:var(--dim); border:1px solid var(--line); box-shadow:none; }
+.nav a.aktif { background:linear-gradient(135deg,#4f46e5,#7c6cff); color:#fff; border-color:transparent; }
+.disk { background:rgba(255,176,32,.08); border:1px solid rgba(255,176,32,.25); color:#e8d5a3; }
+.card, .cari input { background:var(--bg2); border:1px solid var(--line); color:var(--text); box-shadow:var(--shadow); }
+.cari input::placeholder { color:var(--dim); }
+.btn { background:linear-gradient(135deg,#4f46e5,#7c6cff); color:#fff; }
+.btn:hover { filter:brightness(1.15); }
+h2 { color:var(--text); }
+.dim, .mint-kecil, .sumber { color:var(--dim); }
+.tabel-wrap { background:var(--bg2); border-color:var(--line); }
+table.mini th { background:var(--bg3); color:var(--dim); border-color:var(--line); }
+table.mini td { border-color:var(--line); color:var(--text); }
+tr:hover td { background:rgba(124,108,255,.06); }
+.up { color:var(--up); } .down { color:var(--down); }
+.skor-badge { background:rgba(47,213,123,.12); color:var(--up); }
+.aksi a { background:var(--bg3); border:1px solid var(--line); }
+.aksi a:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
+.tk { background:var(--bg3); border:1px solid var(--line); color:var(--text); }
+.logo-fallback { background:var(--accent); }
+#grafs { background:var(--bg2); border:1px solid var(--line); border-radius:var(--r); }
+.kartu-risiko { background:var(--bg3); border:1px solid var(--line); }
+.foot-by, .disk2 { color:var(--dim); }
+
+.angka-baris .angka b, .angka-baris b, .angka-baris .nilai { color:var(--text); }
+.angka-baris .label { color:var(--dim); opacity:1; }
+.harga { color:var(--text); }

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KoinScan — Multi-Chain</title>
+<link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+<body>
+<header>
+  <h1><a href="/" style="color:inherit;text-decoration:none"><span class="logo-t-x"></span>KoinScan <span class="sol">SOL</span></a></h1>
+  <div class="sub"><span class="dot"></span> ANALISA MULTI-CHAIN · ETHEREUM · BSC · BASE · TON · DEXSCREENER + GECKOTERMINAL</div>
+  <div id="nav"></div>
+</header>
+
+<div class="wrap">
+  <div class="stat-grid" id="stat"></div>
+
+  <h2>KOIN MULTI-CHAIN TRENDING <span class="dim" style="font-weight:400;font-size:.72rem">skor dihitung saat dibuka · cache 2 menit</span></h2>
+  <div class="tabel-wrap"><table id="t-mc" class="mini"><thead><tr>
+    <th>#</th><th>Koin</th><th>Jaringan</th><th class="hide-m">DEX</th><th class="r">Skor</th><th class="r">MC</th>
+    <th class="r hide-m">Liq</th><th class="r">1j</th><th class="r">24j</th><th class="r hide-m">Vol 24j</th>
+    <th class="r hide-m">Beli%</th></tr></thead><tbody></tbody></table></div>
+
+  <footer>
+  <div>Data: DexScreener · GeckoTerminal · Arkham (opsional via API key) — diproses mandiri.</div>
+  <div class="foot-by">KoinScan by <b>arifrfza</b></div>
+</footer>
+</div>
+<script src="/static/app.js?v=27">pasangSortir('#t-mc', [3,4,5,6,7,8,9]);
+</script>
+<script src="/static/nav.js?v=9"></script>
+<script>
+// fmt$ & pct dipakai dari app.js (jangan redeclare — SyntaxError mematikan seluruh script)
+async function muat(){
+  try {
+    const d = await (await fetch('/api/multichain', {cache:'no-store'})).json();
+    const ks = d.koin || [];
+    document.getElementById('stat').innerHTML = `
+      <div class="stat"><b>${ks.length}</b>koin multi-chain</div>
+      <div class="stat"><b>${new Set(ks.map(k=>k.chain_label)).size}</b>jaringan aktif</div>
+      <div class="stat"><b>${ks.filter(k=>(k.h1||0)>=5).length}</b>momentum naik 1j</div>
+      <div class="stat"><b>${d.waktu||'–'}</b>update terakhir</div>`;
+    const row = (k,i)=>`<tr data-mint="${k.mint}" onclick="if(event.target.closest('a'))return;location='/grafik?mint=${k.mint}'">
+      <td>${i+1}</td>
+      <td>${logoHTML(k,'logo-t')}<b>${k.simbol}</b></td>
+      <td><span class="badge src">${k.chain_label||'?'}</span></td>
+      <td class="hide-m dim2">${k.dex||k.sumber||''}</td>
+      <td class="skor">${skorHTML(k.skor??'–')}</td>
+      <td class="r">${fmt$(k.mc)}</td>
+      <td class="r hide-m">${k.liq?fmt$(k.liq):'–'}</td>
+      <td class="r">${pct(k.h1)}</td>
+      <td class="r">${pct(k.h24)}</td>
+      <td class="r hide-m">${k.vol24?fmt$(k.vol24):'–'}</td>
+      <td class="r hide-m">${k.tekanan_beli!=null?k.tekanan_beli+'%':'–'}</td>
+    </tr>`;
+    isi('#t-mc', ks, row, 'Belum ada koin multi-chain — coba lagi sebentar.');
+  } catch(e){ console.error(e); }
+}
+muat();
+setInterval(muat, 120000);
+</script>
+</body>
+</html>
